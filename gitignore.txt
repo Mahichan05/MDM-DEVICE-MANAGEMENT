@@ -1,0 +1,35 @@
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# Build
+build/
+target/
+*.class
+*.jar
+*.war
+
+# Gradle
+.gradle/
+local.properties
+
+# Android
+mdm-app/.gradle/
+mdm-app/app/build/
+mdm-app/build/
+mdm-app/local.properties
+mdm-app/.idea/
+
+# Backend
+mdm-backend/target/
+mdm-backend/.mvn/wrapper/maven-wrapper.jar
+mdm-backend/apache-maven-3.9.6/
+mdm-backend/maven.zip
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Env
+*.env
