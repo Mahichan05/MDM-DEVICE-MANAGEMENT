@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Device Detail - MDM Dashboard</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f2f5; color: #333; }
+        .header { background: #1a73e8; color: white; padding: 20px 40px; display: flex; align-items: center; justify-content: space-between; }
+        .header h1 { font-size: 24px; }
+        .header a { color: white; opacity: 0.8; }
+        .logout-btn { padding: 8px 20px; background: rgba(255,255,255,0.15); color: white; border: 1px solid rgba(255,255,255,0.3); border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; text-decoration: none; transition: all 0.2s; opacity: 1 !important; }
+        .logout-btn:hover { background: rgba(255,255,255,0.25); text-decoration: none; }
+        .logout-form { margin: 0; }
+        .container { max-width: 1400px; margin: 30px auto; padding: 0 20px; }
+        .card { background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+        .card h2 { padding: 20px; border-bottom: 1px solid #e0e0e0; }
+        .info-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 16px; padding: 20px; }
+        .info-item { }
+        .info-item label { display: block; font-size: 12px; color: #666; text-transform: uppercase; font-weight: 600; }
+        .info-item span { font-size: 16px; margin-top: 4px; display: block; }
+        table { width: 100%; border-collapse: collapse; min-width: 900px; }
+        th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid #e0e0e0; font-size: 13px; }
+        .col-pkg { max-width: 200px; word-break: break-all; font-size: 11px; color: #666; }
+        .col-ver { max-width: 180px; word-break: break-word; font-size: 12px; }
+        .col-src { max-width: 120px; word-break: break-word; font-size: 12px; }
+        .col-actions { text-align: center; min-width: 100px; }
+        th { background: #f8f9fa; font-weight: 600; color: #555; }
+        tr:hover { background: #f5f7ff; }
+        .badge { display: inline-block; padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: 600; }
+        .badge-system { background: #fef7e0; color: #b06000; }
+        .badge-user { background: #e8f0fe; color: #1a73e8; }
+        .back-link { display: inline-block; margin-bottom: 20px; color: #1a73e8; text-decoration: none; }
+        .back-link:hover { text-decoration: underline; }
+        .empty-state { padding: 40px; text-align: center; color: #888; }
+
+        /* Find Hub Styles */
+        .find-hub-actions { display: flex; gap: 12px; padding: 20px; flex-wrap: wrap; }
+        .cmd-btn { padding: 12px 24px; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.2s; }
+        .cmd-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+        .cmd-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
+        .btn-alarm { background: #ff9800; color: white; }
+        .btn-stop-alarm { background: #607d8b; color: white; }
+        .btn-lock { background: #2196f3; color: white; }
+        .btn-reboot { background: #9c27b0; color: white; }
+        .btn-factory-reset { background: #f44336; color: white; }
+        .cmd-status { padding: 12px 20px; margin: 0 20px 20px; border-radius: 8px; display: none; }
+        .cmd-status.success { display: block; background: #e6f4ea; color: #1e8e3e; }
+        .cmd-status.error { display: block; background: #fce8e6; color: #d93025; }
+        #map { height: 400px; width: 100%; }
+        .location-info { padding: 20px; }
+        .location-info .loc-detail { display: flex; gap: 30px; flex-wrap: wrap; margin-top: 10px; }
+        .location-info .loc-item { font-size: 14px; color: #555; }
+        .location-info .loc-item strong { color: #333; }
+        .cmd-history-table td, .cmd-history-table th { font-size: 13px; padding: 8px 16px; }
+        .badge-pending { background: #fff3e0; color: #e65100; }
+        .badge-executed { background: #e6f4ea; color: #1e8e3e; }
+        .badge-failed { background: #fce8e6; color: #d93025; }
+        .cat-badge { display: inline-block; padding: 3px 10px; border-radius: 10px; font-size: 11px; font-weight: 600; }
+        .cat-social { background: #e8eaf6; color: #283593; }
+        .cat-communication { background: #e0f2f1; color: #00695c; }
+        .cat-entertainment { background: #fce4ec; color: #ad1457; }
+        .cat-games { background: #fff3e0; color: #e65100; }
+        .cat-productivity { background: #e8f5e9; color: #2e7d32; }
+        .cat-shopping { background: #fff8e1; color: #f57f17; }
+        .cat-finance { background: #e3f2fd; color: #1565c0; }
+        .cat-travel { background: #f3e5f5; color: #6a1b9a; }
+        .cat-health { background: #e8f5e9; color: #1b5e20; }
+        .cat-education { background: #e0f7fa; color: #00838f; }
+        .cat-news { background: #eceff1; color: #37474f; }
+        .cat-photography { background: #fbe9e7; color: #bf360c; }
+        .cat-utilities { background: #f5f5f5; color: #424242; }
+        .cat-browser { background: #e1f5fe; color: #01579b; }
+        .cat-system-cat { background: #efebe9; color: #4e342e; }
+        .cat-other { background: #f5f5f5; color: #616161; }
+        .filter-tabs { display: flex; gap: 8px; padding: 16px 20px; flex-wrap: wrap; border-bottom: 1px solid #e0e0e0; }
+        .filter-tab { padding: 6px 16px; border: 1px solid #ddd; border-radius: 20px; font-size: 13px; cursor: pointer; background: white; transition: all 0.2s; }
+        .filter-tab:hover { background: #f0f0f0; }
+        .filter-tab.active { background: #1a73e8; color: white; border-color: #1a73e8; }
+        .filter-tab .count { font-size: 11px; opacity: 0.8; margin-left: 4px; }
+        .btn-uninstall { padding: 5px 14px; border: none; border-radius: 6px; background: #f44336; color: white; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+        .btn-uninstall:hover { background: #d32f2f; transform: translateY(-1px); }
+        .btn-uninstall:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+        .btn-uninstall.system-app { background: #bdbdbd; cursor: not-allowed; }
+        .uninstall-status { font-size: 12px; padding: 2px 8px; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Device Detail</h1>
+        <form th:action="@{/logout}" method="post" class="logout-form">
+            <button type="submit" class="logout-btn">&#x1F6AA; Logout</button>
+        </form>
+    </div>
+
+    <div class="container">
+        <a href="/dashboard" class="back-link">&larr; Back to Dashboard</a>
+
+        <!-- Device Enrollment Info -->
+        <div class="card">
+            <h2>Enrollment Information</h2>
+            <div class="info-grid">
+                <div class="info-item">
+                    <label>Device ID</label>
+                    <span th:text="${device.deviceId}"></span>
+                </div>
+                <div class="info-item">
+                    <label>Enrollment Method</label>
+                    <span th:text="${device.enrollmentMethod}"></span>
+                </div>
+                <div class="info-item">
+                    <label>Status</label>
+                    <span th:text="${device.status}"></span>
+                </div>
+                <div class="info-item">
+                    <label>Enrolled At</label>
+                    <span th:text="${device.enrolledAt}"></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Device Hardware Info -->
+        <div class="card" th:if="${device.deviceInfo != null}">
+            <h2>Hardware Information</h2>
+            <div class="info-grid">
+                <div class="info-item">
+                    <label>Model</label>
+                    <span th:text="${device.deviceInfo.deviceModel}"></span>
+                </div>
+                <div class="info-item">
+                    <label>Manufacturer</label>
+                    <span th:text="${device.deviceInfo.manufacturer}"></span>
+                </div>
+                <div class="info-item">
+                    <label>OS Version</label>
+                    <span th:text="${device.deviceInfo.osVersion}"></span>
+                </div>
+                <div class="info-item">
+                    <label>SDK Version</label>
+                    <span th:text="${device.deviceInfo.sdkVersion}"></span>
+                </div>
+                <div class="info-item">
+                    <label>Serial Number</label>
+                    <span th:text="${device.deviceInfo.serialNumber ?: 'N/A'}"></span>
+                </div>
+                <div class="info-item">
+                    <label>Unique Identifier</label>
+                    <span th:text="${device.deviceInfo.uniqueIdentifier}"></span>
+                </div>
+                <div class="info-item">
+                    <label>IMEI</label>
+                    <span th:text="${device.deviceInfo.imei ?: 'N/A'}"></span>
+                </div>
+                <div class="info-item">
+                    <label>Device Type</label>
+                    <span th:text="${device.deviceInfo.deviceType ?: 'N/A'}"></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Find My Device / Find Hub -->
+        <div class="card">
+            <h2>&#128205; Find My Device</h2>
+            <div class="find-hub-actions">
+                <button class="cmd-btn btn-alarm" onclick="sendCommand('ALARM')">&#128266; Play Alarm</button>
+                <button class="cmd-btn btn-stop-alarm" onclick="sendCommand('STOP_ALARM')">&#128263; Stop Alarm</button>
+                <button class="cmd-btn btn-lock" onclick="sendCommand('LOCK')">&#128274; Lock Device</button>
+                <button class="cmd-btn btn-reboot" onclick="sendCommand('REBOOT')">&#128260; Reboot</button>
+                <button class="cmd-btn btn-factory-reset" onclick="confirmFactoryReset()">&#9888;&#65039; Factory Reset</button>
+            </div>
+            <div id="cmdStatus" class="cmd-status"></div>
+        </div>
+
+        <!-- GPS Location Map -->
+        <div class="card">
+            <h2>&#127758; Device Location</h2>
+            <div id="map"></div>
+            <div class="location-info" id="locationInfo">
+                <p style="color: #888;">Loading location data...</p>
+            </div>
+        </div>
+
+        <!-- Command History -->
+        <div class="card">
+            <h2>&#128203; Command History</h2>
+            <div id="commandHistory">
+                <p class="empty-state">Loading command history...</p>
+            </div>
+        </div>
+
+        <!-- Installed Applications -->
+        <div class="card">
+            <h2 th:text="'Installed Applications (' + ${#lists.size(apps)} + ')'"></h2>
+            <div th:if="${#lists.isEmpty(apps)}" class="empty-state">
+                <p>No application inventory available for this device.</p>
+            </div>
+            <div th:unless="${#lists.isEmpty(apps)}">
+                <div class="filter-tabs" id="filterTabs">
+                    <span class="filter-tab active" data-category="all" onclick="filterApps('all', this)">All</span>
+                </div>
+                <div class="table-scroll">
+                <table id="appsTable">
+                    <thead>
+                        <tr>
+                            <th>App Name</th>
+                            <th>Package Name</th>
+                            <th>Version</th>
+                            <th>Category</th>
+                            <th>Type</th>
+                            <th>Install Source</th>
+                            <th class="col-actions">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="app : ${apps}" th:attr="data-category=${app.category ?: 'Other'}">
+                            <td th:text="${app.appName}"></td>
+                            <td class="col-pkg" th:text="${app.packageName}"></td>
+                            <td class="col-ver" th:text="${app.versionName + ' (' + app.versionCode + ')'}"></td>
+                            <td>
+                                <span class="cat-badge"
+                                    th:classappend="${app.category == 'Social Media' ? 'cat-social' : (app.category == 'Communication' ? 'cat-communication' : (app.category == 'Entertainment' ? 'cat-entertainment' : (app.category == 'Games' ? 'cat-games' : (app.category == 'Productivity' ? 'cat-productivity' : (app.category == 'Shopping' ? 'cat-shopping' : (app.category == 'Finance' ? 'cat-finance' : (app.category == 'Travel' ? 'cat-travel' : (app.category == 'Health' ? 'cat-health' : (app.category == 'Education' ? 'cat-education' : (app.category == 'News' ? 'cat-news' : (app.category == 'Photography' ? 'cat-photography' : (app.category == 'Utilities' ? 'cat-utilities' : (app.category == 'Browser' ? 'cat-browser' : (app.category == 'System' ? 'cat-system-cat' : 'cat-other'))))))))))))))}"
+                                    th:text="${app.category ?: 'Other'}"></span>
+                            </td>
+                            <td>
+                                <span class="badge badge-system" th:if="${app.isSystemApp}">System</span>
+                                <span class="badge badge-user" th:unless="${app.isSystemApp}">User</span>
+                            </td>
+                            <td class="col-src" th:text="${app.installationSource ?: 'Unknown'}"></td>
+                            <td class="col-actions">
+                                <button class="btn-uninstall"
+                                    th:if="${!app.isSystemApp}"
+                                    th:data-pkg="${app.packageName}"
+                                    onclick="uninstallApp(this.getAttribute('data-pkg'), this)">
+                                    &#128465; Uninstall
+                                </button>
+                                <span th:if="${app.isSystemApp}" style="color:#999; font-size:12px;">Protected</span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script th:inline="javascript">
+        const deviceId = /*[[${device.deviceId}]]*/ '';
+        const authHeader = 'Basic ' + btoa('mdm-admin:mdm-secret-2024');
+
+        // Send Command
+        function sendCommand(commandType) {
+            const statusEl = document.getElementById('cmdStatus');
+            statusEl.className = 'cmd-status';
+            statusEl.style.display = 'none';
+
+            fetch('/command', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': authHeader },
+                body: JSON.stringify({ deviceId: deviceId, commandType: commandType })
+            })
+            .then(r => r.json())
+            .then(data => {
+                statusEl.textContent = '\u2705 ' + data.message;
+                statusEl.className = 'cmd-status success';
+                loadCommandHistory();
+            })
+            .catch(err => {
+                statusEl.textContent = '\u274c Failed to send command: ' + err.message;
+                statusEl.className = 'cmd-status error';
+            });
+        }
+
+        function uninstallApp(packageName, btn) {
+            if (!confirm('Uninstall ' + packageName + ' from this device?')) return;
+            btn.disabled = true;
+            btn.textContent = 'Sending...';
+            fetch('/command', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': authHeader },
+                body: JSON.stringify({ deviceId: deviceId, commandType: 'UNINSTALL_APP', payload: packageName })
+            })
+            .then(r => r.json())
+            .then(data => {
+                btn.textContent = '\u2705 Sent';
+                btn.style.background = '#4caf50';
+                loadCommandHistory();
+            })
+            .catch(err => {
+                btn.textContent = '\u274c Failed';
+                btn.style.background = '#f44336';
+                btn.disabled = false;
+                setTimeout(() => { btn.textContent = '\uD83D\uDDD1 Uninstall'; btn.style.background = ''; }, 3000);
+            });
+        }
+
+        function confirmFactoryReset() {
+            if (confirm('WARNING: This will erase ALL data on the device. This action cannot be undone. Continue?')) {
+                if (confirm('Are you absolutely sure? This is a FACTORY RESET.')) {
+                    sendCommand('FACTORY_RESET');
+                }
+            }
+        }
+
+        // Load Location
+        let map = null;
+        let marker = null;
+
+        function initMap() {
+            map = L.map('map').setView([20.5937, 78.9629], 5); // Default: India center
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; OpenStreetMap contributors'
+            }).addTo(map);
+        }
+
+        function loadLocation() {
+            fetch('/location/' + encodeURIComponent(deviceId), {
+                headers: { 'Authorization': authHeader }
+            })
+            .then(r => {
+                if (r.status === 204) throw new Error('NO_LOCATION');
+                return r.json();
+            })
+            .then(loc => {
+                const lat = loc.latitude;
+                const lng = loc.longitude;
+                map.setView([lat, lng], 16);
+                if (marker) map.removeLayer(marker);
+                marker = L.marker([lat, lng]).addTo(map)
+                    .bindPopup('<b>Last Known Location</b><br>Accuracy: ' + (loc.accuracy || 'N/A') + 'm')
+                    .openPopup();
+
+                const infoEl = document.getElementById('locationInfo');
+                const time = new Date(loc.recordedAt).toLocaleString();
+                infoEl.innerHTML =
+                    '<div class="loc-detail">' +
+                    '<div class="loc-item"><strong>Latitude:</strong> ' + lat.toFixed(6) + '</div>' +
+                    '<div class="loc-item"><strong>Longitude:</strong> ' + lng.toFixed(6) + '</div>' +
+                    '<div class="loc-item"><strong>Accuracy:</strong> ' + (loc.accuracy ? loc.accuracy.toFixed(1) + 'm' : 'N/A') + '</div>' +
+                    '<div class="loc-item"><strong>Speed:</strong> ' + (loc.speed ? loc.speed.toFixed(1) + ' m/s' : 'N/A') + '</div>' +
+                    '<div class="loc-item"><strong>Battery:</strong> ' + (loc.batteryLevel != null ? loc.batteryLevel + '%' : 'N/A') + '</div>' +
+                    '<div class="loc-item"><strong>Last Updated:</strong> ' + time + '</div>' +
+                    '</div>';
+            })
+            .catch(err => {
+                document.getElementById('locationInfo').innerHTML =
+                    '<p style="color: #888;">No location data available yet. The device will report its location once connected.</p>';
+            });
+        }
+
+        // Load Command History
+        function loadCommandHistory() {
+            fetch('/commands/' + encodeURIComponent(deviceId) + '/history', {
+                headers: { 'Authorization': authHeader }
+            })
+            .then(r => r.json())
+            .then(commands => {
+                const container = document.getElementById('commandHistory');
+                if (!commands || commands.length === 0) {
+                    container.innerHTML = '<p class="empty-state">No commands sent to this device yet.</p>';
+                    return;
+                }
+                let html = '<table class="cmd-history-table"><thead><tr><th>Command</th><th>Status</th><th>Created</th><th>Executed</th></tr></thead><tbody>';
+                commands.forEach(cmd => {
+                    const badgeClass = cmd.status === 'EXECUTED' ? 'badge-executed' : (cmd.status === 'FAILED' ? 'badge-failed' : 'badge-pending');
+                    html += '<tr>' +
+                        '<td>' + cmd.commandType + '</td>' +
+                        '<td><span class="badge ' + badgeClass + '">' + cmd.status + '</span></td>' +
+                        '<td>' + new Date(cmd.createdAt).toLocaleString() + '</td>' +
+                        '<td>' + (cmd.executedAt ? new Date(cmd.executedAt).toLocaleString() : '-') + '</td>' +
+                        '</tr>';
+                });
+                html += '</tbody></table>';
+                container.innerHTML = html;
+            })
+            .catch(() => {
+                document.getElementById('commandHistory').innerHTML = '<p class="empty-state">Failed to load command history.</p>';
+            });
+        }
+
+        // Initialize
+        initMap();
+        loadLocation();
+        loadCommandHistory();
+        // Refresh location every 30 seconds
+        setInterval(loadLocation, 30000);
+
+        // App Category Filter
+        function buildCategoryTabs() {
+            const table = document.getElementById('appsTable');
+            if (!table) return;
+            const rows = table.querySelectorAll('tbody tr');
+            const categories = {};
+            rows.forEach(row => {
+                const cat = row.getAttribute('data-category') || 'Other';
+                categories[cat] = (categories[cat] || 0) + 1;
+            });
+            const tabs = document.getElementById('filterTabs');
+            if (!tabs) return;
+            // Update "All" count
+            tabs.querySelector('.filter-tab').innerHTML = 'All <span class="count">(' + rows.length + ')</span>';
+            // Sort categories alphabetically
+            const sorted = Object.keys(categories).sort();
+            sorted.forEach(cat => {
+                const tab = document.createElement('span');
+                tab.className = 'filter-tab';
+                tab.setAttribute('data-category', cat);
+                tab.innerHTML = cat + ' <span class="count">(' + categories[cat] + ')</span>';
+                tab.onclick = function() { filterApps(cat, this); };
+                tabs.appendChild(tab);
+            });
+        }
+
+        function filterApps(category, el) {
+            // Update active tab
+            document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+            el.classList.add('active');
+            // Filter rows
+            const rows = document.querySelectorAll('#appsTable tbody tr');
+            rows.forEach(row => {
+                if (category === 'all' || row.getAttribute('data-category') === category) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        }
+
+        buildCategoryTabs();
+    </script>
+</body>
+</html>

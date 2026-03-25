@@ -1,0 +1,24 @@
+<resources>
+    <string name="app_name">MDM Device Manager</string>
+    <string name="device_info_title">Device Information</string>
+    <string name="app_inventory_title">Installed Applications</string>
+    <string name="enrollment_status">Enrollment Status</string>
+    <string name="sync_now">Sync Now</string>
+    <string name="last_sync">Last Sync</string>
+    <string name="device_owner_active">Device Owner: Active</string>
+    <string name="device_admin_active">Device Admin: Active</string>
+    <string name="device_owner_inactive">Device Owner: Not Active</string>
+    <string name="enrolling">Enrolling device...</string>
+    <string name="enrollment_success">Device enrolled successfully</string>
+    <string name="enrollment_failed">Enrollment failed</string>
+    <string name="syncing">Syncing data...</string>
+    <string name="sync_success">Sync completed</string>
+    <string name="sync_failed">Sync failed</string>
+    <string name="tab_device_info">Device Info</string>
+    <string name="tab_apps">Applications</string>
+    <string name="system_app">System</string>
+    <string name="user_app">User</string>
+    <string name="provisioning_complete">Provisioning Complete!</string>
+    <string name="provisioning_message">Device has been successfully provisioned as a managed device. Tap Continue to proceed.</string>
+    <string name="continue_text">Continue</string>
+</resources>

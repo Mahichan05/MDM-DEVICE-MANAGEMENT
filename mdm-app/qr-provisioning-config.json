@@ -1,0 +1,9 @@
+{
+  "android.app.extra.PROVISIONING_DEVICE_ADMIN_COMPONENT_NAME": "com.mdm.devicemanager/com.mdm.devicemanager.admin.MdmDeviceAdminReceiver",
+  "android.app.extra.PROVISIONING_DEVICE_ADMIN_PACKAGE_DOWNLOAD_LOCATION": "",
+  "android.app.extra.PROVISIONING_SKIP_ENCRYPTION": false,
+  "android.app.extra.PROVISIONING_WIFI_SSID": "YourWiFiSSID",
+  "android.app.extra.PROVISIONING_WIFI_PASSWORD": "YourWiFiPassword",
+  "android.app.extra.PROVISIONING_WIFI_SECURITY_TYPE": "WPA",
+  "android.app.extra.PROVISIONING_LEAVE_ALL_SYSTEM_APPS_ENABLED": true
+}

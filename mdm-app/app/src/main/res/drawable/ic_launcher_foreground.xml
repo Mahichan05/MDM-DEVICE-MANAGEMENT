@@ -1,0 +1,14 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Shield shape -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M54,24L30,34v16c0,14.4 10.2,27.8 24,31 13.8,-3.2 24,-16.6 24,-31V34L54,24zM54,24" />
+    <!-- Check mark -->
+    <path
+        android:fillColor="#1A73E8"
+        android:pathData="M46,55l-8,-8 2.8,-2.8L46,49.4l13.2,-13.2L62,39L46,55z" />
+</vector>
